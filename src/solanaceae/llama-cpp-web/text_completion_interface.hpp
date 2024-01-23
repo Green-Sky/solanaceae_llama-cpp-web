@@ -4,10 +4,10 @@
 #include <string_view>
 #include <vector>
 
-struct LlamaCppWebI {
-	virtual ~LlamaCppWebI(void) {}
+struct TextCompletionI {
+	virtual ~TextCompletionI(void) {}
 
-	virtual bool isHealthy(void) = 0;
+	virtual bool isGood(void) = 0;
 
 	// TODO: add more complex api
 

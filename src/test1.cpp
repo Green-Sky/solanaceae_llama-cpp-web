@@ -11,7 +11,7 @@
 int main(void) {
 	LlamaCppWeb lcw;
 
-	if (!lcw.isHealthy()) {
+	if (!lcw.isGood()) {
 		std::cerr << lcw._cli.host() << " " << lcw._cli.port() << " endpoint not healthy\n";
 		return 1;
 	}

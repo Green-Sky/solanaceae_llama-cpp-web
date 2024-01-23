@@ -1,14 +1,16 @@
 #include <solanaceae/plugin/solana_plugin_v1.h>
 
-#include <solanaceae/llama-cpp-web/llama_cpp_web_impl.hpp>
+#include <solanaceae/util/config_model.hpp>
+#include <solanaceae/llama-cpp-web/text_completion_interface.hpp>
+#include <solanaceae/rpbot/rpbot.hpp>
 
 #include <memory>
 #include <iostream>
 #include <limits>
 
-static std::unique_ptr<LlamaCppWeb> g_lcw = nullptr;
+static std::unique_ptr<RPBot> g_rpbot = nullptr;
 
-constexpr const char* plugin_name = "llama-cpp-web";
+constexpr const char* plugin_name = "RPBot";
 
 extern "C" {
 
@@ -28,15 +30,15 @@ SOLANA_PLUGIN_EXPORT uint32_t solana_plugin_start(struct SolanaAPI* solana_api) 
 	}
 
 	try {
-		//auto* conf = PLUG_RESOLVE_INSTANCE(ConfigModelI);
+		auto* completion = PLUG_RESOLVE_INSTANCE(TextCompletionI);
+		auto* conf = PLUG_RESOLVE_INSTANCE(ConfigModelI);
 
 		// static store, could be anywhere tho
 		// construct with fetched dependencies
-		g_lcw = std::make_unique<LlamaCppWeb>();
+		g_rpbot = std::make_unique<RPBot>(*completion, *conf);
 
 		// register types
-		PLUG_PROVIDE_INSTANCE(LlamaCppWeb, plugin_name, g_lcw.get());
-		PLUG_PROVIDE_INSTANCE(TextCompletionI, plugin_name, g_lcw.get());
+		PLUG_PROVIDE_INSTANCE(RPBot, plugin_name, g_rpbot.get());
 	} catch (const ResolveException& e) {
 		std::cerr << "PLUGIN " << plugin_name << " " << e.what << "\n";
 		return 2;
@@ -48,14 +50,11 @@ SOLANA_PLUGIN_EXPORT uint32_t solana_plugin_start(struct SolanaAPI* solana_api) 
 SOLANA_PLUGIN_EXPORT void solana_plugin_stop(void) {
 	std::cout << "PLUGIN " << plugin_name << " STOP()\n";
 
-	g_lcw.reset();
+	g_rpbot.reset();
 }
 
 SOLANA_PLUGIN_EXPORT float solana_plugin_tick(float delta) {
-	(void)delta;
-	//g_ircc->iterate(); // TODO: return interval, respect dcc etc
-
-	return std::numeric_limits<float>::max();
+	return g_rpbot->tick(delta);
 }
 
 } // extern C

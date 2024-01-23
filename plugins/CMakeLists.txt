@@ -9,3 +9,12 @@ target_link_libraries(plugin_llama-cpp-web PUBLIC
 	solanaceae_llama-cpp-web
 )
 
+add_library(plugin_rpbot SHARED
+	./plugin_rpbot.cpp
+)
+
+target_link_libraries(plugin_rpbot PUBLIC
+	solanaceae_plugin
+	solanaceae_rpbot
+)
+

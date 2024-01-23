@@ -19,7 +19,7 @@ static std::string convertToSafeGrammarString(std::string_view input) {
 LlamaCppWeb::~LlamaCppWeb(void) {
 }
 
-bool LlamaCppWeb::isHealthy(void) {
+bool LlamaCppWeb::isGood(void) {
 	auto res = _cli.Get("/health");
 	if (
 		res.error() != httplib::Error::Success ||
@@ -123,7 +123,8 @@ std::string LlamaCppWeb::completeLine(const std::string_view prompt) {
 }
 
 nlohmann::json LlamaCppWeb::complete(const nlohmann::json& request_j) {
-	if (!isHealthy()) {
+	// TODO: dont check ourself
+	if (!isGood()) {
 		return {};
 	}
 
