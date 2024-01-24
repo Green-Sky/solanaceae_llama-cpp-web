@@ -121,7 +121,12 @@ std::string LlamaCppWeb::completeLine(const std::string_view prompt) {
 		{"stop", {"\n"}},
 	});
 
-	return ret.dump();
+	if (ret.empty() || ret.count("content") == 0) {
+		// error
+		return "";
+	}
+
+	return ret.at("content");
 }
 
 nlohmann::json LlamaCppWeb::complete(const nlohmann::json& request_j) {

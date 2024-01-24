@@ -8,6 +8,7 @@
 #include <solanaceae/util/utils.hpp>
 
 #include <limits>
+#include <string_view>
 #include <vector>
 #include <atomic>
 #include <future>
@@ -101,7 +102,7 @@ void RPBot::stateTransition(const Contact3 c, const StateIdle& from, StateNext& 
 
 template<>
 void RPBot::stateTransition(const Contact3, const StateNext&, StateIdle& to) {
-	to.timeout = std::uniform_real_distribution<>{15.f, 45.f}(_rng);
+	to.timeout = std::uniform_real_distribution<>{10.f, 45.f}(_rng);
 }
 
 template<>
@@ -110,7 +111,7 @@ void RPBot::stateTransition(const Contact3 c, const StateNext& from, StateGenera
 	assert(_cr.all_of<Contact::Components::Self>(c));
 	const Contact3 self = _cr.get<Contact::Components::Self>(c).self;
 
-	to.prompt += _cr.get<Contact::Components::Name>(self).name + ": "; // TODO: remove space
+	to.prompt += _cr.get<Contact::Components::Name>(self).name + ":"; // TODO: remove space
 
 	{ // launch async
 		to.future = std::async(std::launch::async, [&to, this]() -> std::string {
@@ -121,7 +122,7 @@ void RPBot::stateTransition(const Contact3 c, const StateNext& from, StateGenera
 
 template<>
 void RPBot::stateTransition(const Contact3, const StateGenerateMsg&, StateIdle& to) {
-	to.timeout = std::uniform_real_distribution<>{10.f, 30.f}(_rng);
+	to.timeout = std::uniform_real_distribution<>{5.f, 20.f}(_rng);
 }
 
 RPBot::RPBot(
@@ -319,13 +320,21 @@ float RPBot::doAllGenerateMsg(float) {
 			std::cout << "RPBot: generatemessage compute done!\n";
 
 			std::string msg = state.future.get();
-			_rmm.sendText(c, msg);
+			if (!msg.empty()) {
+				std::string::size_type start_pos = 0;
+				if (msg.front() == ' ') {
+					start_pos += 1;
+				}
+				_rmm.sendText(c, std::string_view{msg}.substr(start_pos));
+			}
 
 			// TODO: timing check?
 			// transition to Idle
 			emplaceStateTransition<StateIdle>(_cr, c, state);
 		}
 	});
+
+	_cr.remove<StateGenerateMsg>(to_remove.cbegin(), to_remove.cend());
 	return min_tick_interval;
 }
 
