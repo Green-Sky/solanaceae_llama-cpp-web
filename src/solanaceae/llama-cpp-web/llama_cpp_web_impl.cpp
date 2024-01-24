@@ -6,6 +6,8 @@
 
 #include <chrono>
 
+std::minstd_rand thread_local LlamaCppWeb::_rng{std::random_device{}()};
+
 // TODO: variant that strips unicode?
 static std::string convertToSafeGrammarString(std::string_view input) {
 	std::string res;

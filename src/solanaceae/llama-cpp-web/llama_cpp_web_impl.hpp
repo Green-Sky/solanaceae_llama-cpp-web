@@ -8,8 +8,11 @@
 #include <random>
 
 struct LlamaCppWeb : public TextCompletionI {
+	// this mutex locks internally
 	httplib::Client _cli{"http://localhost:8080"};
-	std::minstd_rand _rng{std::random_device{}()};
+
+	// this is a bad idea
+	static std::minstd_rand thread_local _rng;
 
 	~LlamaCppWeb(void);
 

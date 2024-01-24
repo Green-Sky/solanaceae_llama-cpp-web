@@ -3,6 +3,7 @@
 #include <solanaceae/util/config_model.hpp>
 #include <solanaceae/llama-cpp-web/text_completion_interface.hpp>
 #include <solanaceae/rpbot/rpbot.hpp>
+#include <solanaceae/message3/message_command_dispatcher.hpp>
 
 #include <memory>
 #include <iostream>
@@ -32,10 +33,13 @@ SOLANA_PLUGIN_EXPORT uint32_t solana_plugin_start(struct SolanaAPI* solana_api) 
 	try {
 		auto* completion = PLUG_RESOLVE_INSTANCE(TextCompletionI);
 		auto* conf = PLUG_RESOLVE_INSTANCE(ConfigModelI);
+		auto* cr = PLUG_RESOLVE_INSTANCE_VERSIONED(Contact3Registry, "1");
+		auto* rmm = PLUG_RESOLVE_INSTANCE(RegistryMessageModel);
+		auto* mcd = PLUG_RESOLVE_INSTANCE(MessageCommandDispatcher);
 
 		// static store, could be anywhere tho
 		// construct with fetched dependencies
-		g_rpbot = std::make_unique<RPBot>(*completion, *conf);
+		g_rpbot = std::make_unique<RPBot>(*completion, *conf, *cr, *rmm, mcd);
 
 		// register types
 		PLUG_PROVIDE_INSTANCE(RPBot, plugin_name, g_rpbot.get());
