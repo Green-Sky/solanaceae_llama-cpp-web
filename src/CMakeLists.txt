@@ -32,6 +32,7 @@ target_link_libraries(test1 PUBLIC
 
 add_library(solanaceae_rpbot
 	./solanaceae/rpbot/message_prompt_builder.hpp
+	./solanaceae/rpbot/message_prompt_builder.cpp
 
 	./solanaceae/rpbot/rpbot.hpp
 	./solanaceae/rpbot/rpbot.cpp

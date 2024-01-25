@@ -122,7 +122,8 @@ void RPBot::stateTransition(const Contact3 c, const StateNext& from, StateGenera
 
 template<>
 void RPBot::stateTransition(const Contact3, const StateGenerateMsg&, StateIdle& to) {
-	to.timeout = std::uniform_real_distribution<>{5.f, 20.f}(_rng);
+	// relativly slow delay for multi line messages
+	to.timeout = std::uniform_real_distribution<>{2.f, 15.f}(_rng);
 }
 
 RPBot::RPBot(

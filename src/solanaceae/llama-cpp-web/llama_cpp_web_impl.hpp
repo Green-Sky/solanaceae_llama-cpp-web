@@ -6,6 +6,7 @@
 #include <nlohmann/json_fwd.hpp>
 
 #include <random>
+#include <atomic>
 
 struct LlamaCppWeb : public TextCompletionI {
 	// this mutex locks internally
@@ -13,6 +14,8 @@ struct LlamaCppWeb : public TextCompletionI {
 
 	// this is a bad idea
 	static std::minstd_rand thread_local _rng;
+
+	std::atomic<bool> _use_server_cache {true};
 
 	~LlamaCppWeb(void);
 

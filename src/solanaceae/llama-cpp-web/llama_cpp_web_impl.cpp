@@ -83,6 +83,7 @@ int64_t LlamaCppWeb::completeSelect(const std::string_view prompt, const std::ve
 		{"top_p", 1.0}, // disable
 		{"n_predict", 256}, // unlikely to ever be so high
 		{"seed", _rng()},
+		{"cache_prompt", static_cast<bool>(_use_server_cache)},
 	});
 
 	if (ret.empty()) {
@@ -119,6 +120,7 @@ std::string LlamaCppWeb::completeLine(const std::string_view prompt) {
 		{"n_predict", 1000},
 		{"seed", _rng()},
 		{"stop", {"\n"}},
+		{"cache_prompt", static_cast<bool>(_use_server_cache)},
 	});
 
 	if (ret.empty() || ret.count("content") == 0) {
