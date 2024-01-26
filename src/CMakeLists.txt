@@ -35,7 +35,9 @@ add_library(solanaceae_rpbot
 	./solanaceae/rpbot/message_prompt_builder.cpp
 
 	./solanaceae/rpbot/rpbot.hpp
+	./solanaceae/rpbot/rpbot_states.hpp
 	./solanaceae/rpbot/rpbot.cpp
+	./solanaceae/rpbot/rpbot_commands.cpp
 )
 
 target_include_directories(solanaceae_rpbot PUBLIC .)
