@@ -8,6 +8,8 @@
 #include <solanaceae/message3/components.hpp>
 #include <solanaceae/util/utils.hpp>
 
+#include <fmt/core.h>
+
 #include <limits>
 #include <string_view>
 #include <vector>
@@ -19,22 +21,8 @@ template<>
 void RPBot::stateTransition(const Contact3 c, const StateIdle& from, StateNext& to) {
 	// collect promp
 
-	{ // - system promp
-		to.prompt = system_prompt;
-	}
-
 	MessagePromptBuilder mpb{_cr, c, _rmm, {}};
-	{ // - message history
-		mpb.buildNameLookup();
-		to.prompt += mpb.buildPromptMessageHistory();
-	}
-
-	{ // - next needs the beginning of the new message
-		// empty rn
-		to.prompt += "\n";
-	}
-
-	std::cout << "prompt for next: '" << to.prompt << "'\n";
+	mpb.buildNameLookup();
 
 	int64_t self {-1};
 	{ // get set of possible usernames (even if forced, just to make sure)
@@ -53,6 +41,40 @@ void RPBot::stateTransition(const Contact3 c, const StateIdle& from, StateNext& 
 			}
 		}
 	}
+
+	if (self < 0) {
+		// early exit for invalid self
+		to.future = std::async(std::launch::async, [self]() -> int64_t { return self; });
+		return;
+	}
+
+	{ // - system promp (needs self name etc)
+		if (const auto* id_comp = _cr.try_get<Contact::Components::ID>(c); id_comp != nullptr) {
+			const auto id_hex = bin2hex(id_comp->data);
+			to.prompt = _conf.get_string("RPBot", "system_prompt", id_hex).value();
+		} else {
+			to.prompt = _conf.get_string("RPBot", "system_prompt").value();
+		}
+
+		to.prompt = fmt::format(fmt::runtime(to.prompt),
+			fmt::arg("self_name", to.possible_names.at(self))
+			//fmt::arg("chat_name", "test_group"),
+			//fmt::arg("chat_type", "Group")
+			//fmt::arg("chat_topic", "Group")
+			// current online?
+			// current date?
+		);
+	}
+
+	// - message history
+	to.prompt += mpb.buildPromptMessageHistory();
+
+	{ // - next needs the beginning of the new message
+		// empty rn
+		to.prompt += "\n";
+	}
+
+	std::cout << "prompt for next: '" << to.prompt << "'\n";
 
 	if (!from.force) { // launch async
 		// copy names for string view param (lol)
@@ -107,25 +129,17 @@ RPBot::RPBot(
 ) : _completion(completion), _conf(conf), _cr(cr), _rmm(rmm), _mcd(mcd) {
 	//system_prompt = R"sys(Transcript of a group chat, where Bob talks to online strangers.
 //)sys";
-	// TODO: name is chat specific, leave system prompt a template
-	std::string self_name {"Bob"};
-	if (_conf.has_string("tox", "name")) {
-		self_name = _conf.get_string("tox", "name").value();
+
+	// set default system prompt
+	if (!_conf.has_string("RPBot", "system_prompt")) {
+		_conf.set("RPBot", "system_prompt", std::string_view{
+R"sys(Transcript of a group chat, where {self_name} talks to online strangers.
+{self_name} is creative and curious. {self_name} is writing with precision, but also with occasional typos.
+)sys"
+		});
 	}
 
-#if 1
-	system_prompt = "Transcript of a group chat, where ";
-	system_prompt += self_name;
-	system_prompt += " talks to online strangers. ";
-	system_prompt += self_name;
-	system_prompt += " is creative and curious. ";
-	system_prompt += self_name;
-	system_prompt += " is precise in its writing, but with occasional typos.";
-#else
-#include "./test_system_prompt1.inl"
-#endif
-
-	system_prompt += "\n"; // last entry
+	assert(_conf.has_string("RPBot", "system_prompt"));
 
 	registerCommands();
 }

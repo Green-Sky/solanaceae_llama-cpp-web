@@ -48,5 +48,7 @@ target_link_libraries(solanaceae_rpbot PUBLIC
 	solanaceae_message3
 
 	solanaceae_llama-cpp-web
+
+	fmt::fmt # TODO: switch to header only?
 )
 

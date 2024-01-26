@@ -78,3 +78,13 @@ if (NOT TARGET nlohmann_json::nlohmann_json)
 	FetchContent_MakeAvailable(json)
 endif()
 
+if (NOT TARGET fmt::fmt)
+	# waiting for c++26 runtime formatters be like
+	FetchContent_Declare(fmt
+		GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+		GIT_TAG 10.2.1
+		EXCLUDE_FROM_ALL
+	)
+	FetchContent_MakeAvailable(fmt)
+endif()
+

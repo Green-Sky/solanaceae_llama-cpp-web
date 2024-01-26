@@ -25,8 +25,6 @@ struct RPBot {
 
 	std::minstd_rand _rng{std::random_device{}()};
 
-	std::string system_prompt;
-
 	public:
 		RPBot(
 			TextCompletionI& completion,
