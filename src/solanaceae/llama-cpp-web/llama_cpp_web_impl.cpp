@@ -18,6 +18,11 @@ static std::string convertToSafeGrammarString(std::string_view input) {
 	return res;
 }
 
+LlamaCppWeb::LlamaCppWeb(
+	ConfigModelI& conf
+) : _conf(conf), _cli(_conf.get_string("LlamaCppWeb", "server").value_or("localhost:8080")) {
+}
+
 LlamaCppWeb::~LlamaCppWeb(void) {
 }
 

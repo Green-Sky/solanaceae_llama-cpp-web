@@ -1,5 +1,7 @@
 #include <solanaceae/llama-cpp-web/llama_cpp_web_impl.hpp>
 
+#include <solanaceae/util/simple_config_model.hpp>
+
 #include <nlohmann/json.hpp>
 
 #include <iostream>
@@ -9,7 +11,8 @@
 #include <cstdint>
 
 int main(void) {
-	LlamaCppWeb lcw;
+	SimpleConfigModel scm;
+	LlamaCppWeb lcw{scm};
 
 	if (!lcw.isGood()) {
 		std::cerr << lcw._cli.host() << " " << lcw._cli.port() << " endpoint not healthy\n";

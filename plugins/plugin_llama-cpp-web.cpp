@@ -28,11 +28,11 @@ SOLANA_PLUGIN_EXPORT uint32_t solana_plugin_start(struct SolanaAPI* solana_api) 
 	}
 
 	try {
-		//auto* conf = PLUG_RESOLVE_INSTANCE(ConfigModelI);
+		auto* conf = PLUG_RESOLVE_INSTANCE(ConfigModelI);
 
 		// static store, could be anywhere tho
 		// construct with fetched dependencies
-		g_lcw = std::make_unique<LlamaCppWeb>();
+		g_lcw = std::make_unique<LlamaCppWeb>(*conf);
 
 		// register types
 		PLUG_PROVIDE_INSTANCE(LlamaCppWeb, plugin_name, g_lcw.get());
