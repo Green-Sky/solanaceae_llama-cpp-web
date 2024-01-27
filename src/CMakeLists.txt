@@ -20,7 +20,7 @@ target_link_libraries(solanaceae_llama-cpp-web PUBLIC
 
 ########################################
 
-add_executable(test1
+add_executable(test1 EXCLUDE_FROM_ALL
 	test1.cpp
 )
 
