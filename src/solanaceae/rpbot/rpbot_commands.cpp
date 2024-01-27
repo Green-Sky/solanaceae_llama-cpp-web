@@ -20,14 +20,14 @@ void RPBot::registerCommands(void) {
 
 			if (params.empty()) {
 				// contact_to should be the contact this is for
-				if (_cr.any_of<StateIdle, StateGenerateMsg, StateNext, StateTimingCheck>(contact_to)) {
+				if (_cr.any_of<StateIdle, StateGenerateMsg, StateNextActor, StateTimingCheck>(contact_to)) {
 					_rmm.sendText(
 						contact_from,
 						"error: already running"
 					);
 					return true;
 				}
-				if (_cr.any_of<StateIdle, StateGenerateMsg, StateNext, StateTimingCheck>(contact_from)) {
+				if (_cr.any_of<StateIdle, StateGenerateMsg, StateNextActor, StateTimingCheck>(contact_from)) {
 					_rmm.sendText(
 						contact_from,
 						"error: already running"
@@ -96,7 +96,7 @@ void RPBot::registerCommands(void) {
 
 			if (params.empty()) {
 				// contact_to should be the contact this is for
-				if (_cr.any_of<StateIdle, StateGenerateMsg, StateNext, StateTimingCheck>(contact_to)) {
+				if (_cr.any_of<StateIdle, StateGenerateMsg, StateNextActor, StateTimingCheck>(contact_to)) {
 					_cr.emplace_or_replace<TagStopRPBot>(contact_to);
 					_rmm.sendText(
 						contact_from,
@@ -104,7 +104,7 @@ void RPBot::registerCommands(void) {
 					);
 					return true;
 				}
-				if (_cr.any_of<StateIdle, StateGenerateMsg, StateNext, StateTimingCheck>(contact_from)) {
+				if (_cr.any_of<StateIdle, StateGenerateMsg, StateNextActor, StateTimingCheck>(contact_from)) {
 					_cr.emplace_or_replace<TagStopRPBot>(contact_from);
 					_rmm.sendText(
 						contact_from,
@@ -133,7 +133,7 @@ void RPBot::registerCommands(void) {
 				auto view = _cr.view<Contact::Components::ID>();
 				for (auto it = view.begin(), it_end = view.end(); it != it_end; it++) {
 					if (view.get<Contact::Components::ID>(*it).data == id_bin) {
-						if (_cr.any_of<StateIdle, StateGenerateMsg, StateNext, StateTimingCheck>(*it)) {
+						if (_cr.any_of<StateIdle, StateGenerateMsg, StateNextActor, StateTimingCheck>(*it)) {
 							_cr.emplace_or_replace<TagStopRPBot>(*it);
 							_rmm.sendText(
 								contact_from,
@@ -170,7 +170,7 @@ void RPBot::registerCommands(void) {
 
 			if (params.empty()) {
 				// contact_to should be the contact this is for
-				if (_cr.any_of<StateIdle, StateGenerateMsg, StateNext, StateTimingCheck>(contact_to)) {
+				if (_cr.any_of<StateIdle, StateGenerateMsg, StateNextActor, StateTimingCheck>(contact_to)) {
 					if (_cr.all_of<StateIdle>(contact_to)) {
 						_cr.get<StateIdle>(contact_to).force = true;
 						_cr.get<StateIdle>(contact_to).timeout = 2.f;
@@ -181,7 +181,7 @@ void RPBot::registerCommands(void) {
 					}
 					return true;
 				}
-				if (_cr.any_of<StateIdle, StateGenerateMsg, StateNext, StateTimingCheck>(contact_from)) {
+				if (_cr.any_of<StateIdle, StateGenerateMsg, StateNextActor, StateTimingCheck>(contact_from)) {
 					if (_cr.all_of<StateIdle>(contact_from)) {
 						_cr.get<StateIdle>(contact_from).force = true;
 						_cr.get<StateIdle>(contact_from).timeout = 2.f;
@@ -213,7 +213,7 @@ void RPBot::registerCommands(void) {
 				auto view = _cr.view<Contact::Components::ID>();
 				for (auto it = view.begin(), it_end = view.end(); it != it_end; it++) {
 					if (view.get<Contact::Components::ID>(*it).data == id_bin) {
-						if (_cr.any_of<StateIdle, StateGenerateMsg, StateNext, StateTimingCheck>(*it)) {
+						if (_cr.any_of<StateIdle, StateGenerateMsg, StateNextActor, StateTimingCheck>(*it)) {
 							if (_cr.all_of<StateIdle>(*it)) {
 								_cr.get<StateIdle>(*it).force = true;
 								_cr.get<StateIdle>(*it).timeout = 2.f;

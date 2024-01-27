@@ -18,7 +18,7 @@
 #include <cstdint>
 
 template<>
-void RPBot::stateTransition(const Contact3 c, const StateIdle& from, StateNext& to) {
+void RPBot::stateTransition(const Contact3 c, const StateIdle& from, StateNextActor& to) {
 	// collect promp
 
 	MessagePromptBuilder mpb{_cr, c, _rmm, {}};
@@ -95,12 +95,12 @@ void RPBot::stateTransition(const Contact3 c, const StateIdle& from, StateNext& 
 }
 
 template<>
-void RPBot::stateTransition(const Contact3, const StateNext&, StateIdle& to) {
+void RPBot::stateTransition(const Contact3, const StateNextActor&, StateIdle& to) {
 	to.timeout = std::uniform_real_distribution<>{10.f, 45.f}(_rng);
 }
 
 template<>
-void RPBot::stateTransition(const Contact3 c, const StateNext& from, StateGenerateMsg& to) {
+void RPBot::stateTransition(const Contact3 c, const StateNextActor& from, StateGenerateMsg& to) {
 	to.prompt = from.prompt; // TODO: move from?
 	assert(_cr.all_of<Contact::Components::Self>(c));
 	const Contact3 self = _cr.get<Contact::Components::Self>(c).self;
@@ -177,7 +177,7 @@ float RPBot::doAllIdle(float time_delta) {
 				min_tick_interval = 0.1f;
 
 				// transition to Next
-				emplaceStateTransition<StateNext>(_cr, c, state);
+				emplaceStateTransition<StateNextActor>(_cr, c, state);
 			} else {
 				// check-in in another 15-45s
 				state.timeout = std::uniform_real_distribution<>{15.f, 45.f}(_rng);
@@ -198,9 +198,9 @@ float RPBot::doAllIdle(float time_delta) {
 float RPBot::doAllNext(float) {
 	float min_tick_interval = std::numeric_limits<float>::max();
 	std::vector<Contact3> to_remove;
-	auto view = _cr.view<StateNext>();
+	auto view = _cr.view<StateNextActor>();
 
-	view.each([this, &to_remove, &min_tick_interval](const Contact3 c, StateNext& state) {
+	view.each([this, &to_remove, &min_tick_interval](const Contact3 c, StateNextActor& state) {
 		// TODO: how to timeout?
 		if (state.future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
 			to_remove.push_back(c);
@@ -224,7 +224,7 @@ float RPBot::doAllNext(float) {
 		}
 	});
 
-	_cr.remove<StateNext>(to_remove.cbegin(), to_remove.cend());
+	_cr.remove<StateNextActor>(to_remove.cbegin(), to_remove.cend());
 	return min_tick_interval;
 }
 

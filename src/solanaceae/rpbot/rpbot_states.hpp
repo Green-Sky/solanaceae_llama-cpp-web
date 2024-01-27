@@ -17,8 +17,8 @@ struct StateIdle {
 };
 
 // determines if self should generate a message
-struct StateNext {
-	static constexpr const char* name {"StateNext"};
+struct StateNextActor {
+	static constexpr const char* name {"StateNextActor"};
 
 	std::string prompt;
 	std::vector<std::string> possible_names;

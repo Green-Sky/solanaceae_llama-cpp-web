@@ -72,8 +72,7 @@ std::string MessagePromptBuilder::buildPromptMessage(const Message3Handle m) {
 		return "";
 	}
 
-	// TODO: cache as comp
-	const auto line_prefix = promptMessagePrefixSimple(m);
+	const auto line_prefix = promptMessagePrefixSimple(m) + ": ";
 
 	// TODO: trim
 	std::string message_lines = line_prefix + m.get<Message::Components::MessageText>().text;
@@ -82,15 +81,42 @@ std::string MessagePromptBuilder::buildPromptMessage(const Message3Handle m) {
 		nlpos += line_prefix.size();
 	}
 
+	// TODO: cache as comp
+
 	return message_lines;
 }
 
 std::string MessagePromptBuilder::promptMessagePrefixSimple(const Message3Handle m) {
 	const Contact3 from = m.get<Message::Components::ContactFrom>().c;
 	if (names.count(from)) {
-		return std::string{names[from]} + ": ";
+		return std::string{names[from]};
 	} else {
-		return "<unk-user>: ";
+		return "<unk-user>";
 	}
+}
+
+std::string MessagePromptBuilder::promptMessagePrefixDirected(const Message3Handle m) {
+	// with both contacts (eg: "Name1 to Name2"; or "Name1 to Everyone"
+
+	const Contact3 from = m.get<Message::Components::ContactFrom>().c;
+	const Contact3 to = m.get<Message::Components::ContactTo>().c;
+
+	std::string res;
+
+	if (names.count(from)) {
+		res = std::string{names[from]};
+	} else {
+		res = "<unk-user>";
+	}
+
+	res += " to ";
+
+	if (names.count(to)) {
+		return std::string{names[to]};
+	} else {
+		return "<unk-user>";
+	}
+
+	return res;
 }
 

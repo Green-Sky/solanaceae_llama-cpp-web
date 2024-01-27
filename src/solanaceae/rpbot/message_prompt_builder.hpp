@@ -24,5 +24,9 @@ struct MessagePromptBuilder {
 
 	// generate prompt prefix (just "name:")
 	std::string promptMessagePrefixSimple(const Message3Handle m);
+
+	// with both contacts (eg: "Name1 to Name2:"; or "Name1 to Everyone:"
+	// this maps to private messages, might need fewshot of private or explainer system prompt
+	std::string promptMessagePrefixDirected(const Message3Handle m);
 };
 

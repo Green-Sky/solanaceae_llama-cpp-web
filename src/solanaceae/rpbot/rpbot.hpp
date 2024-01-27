@@ -12,7 +12,7 @@
 
 // fwd
 struct StateIdle;
-struct StateNext;
+struct StateNextActor;
 struct StateGenerateMsg;
 struct StateTimingCheck;
 
