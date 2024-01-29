@@ -96,7 +96,7 @@ void RPBot::stateTransition(const Contact3 c, const StateIdle& from, StateNextAc
 
 template<>
 void RPBot::stateTransition(const Contact3, const StateNextActor&, StateIdle& to) {
-	to.timeout = std::uniform_real_distribution<>{10.f, 45.f}(_rng);
+	to.timeout = std::uniform_real_distribution<>{30.f, 5.f*60.f}(_rng);
 }
 
 template<>
@@ -142,6 +142,8 @@ R"sys(Transcript of a group chat, where {self_name} talks to online strangers.
 	assert(_conf.has_string("RPBot", "system_prompt"));
 
 	registerCommands();
+
+	_rmm.subscribe(this, RegistryMessageModel_Event::message_construct);
 }
 
 float RPBot::tick(float time_delta) {
@@ -279,6 +281,10 @@ bool RPBot::onEvent(const Message::Events::MessageConstruct& e) {
 		return false;
 	}
 
+	if (_cr.any_of<Contact::Components::TagSelfStrong>(contact_from)) {
+		return false; // ignore own messages
+	}
+
 	Contact3 rpbot_contact = entt::null;
 
 	// check ContactTo (public)
@@ -302,6 +308,7 @@ bool RPBot::onEvent(const Message::Events::MessageConstruct& e) {
 	auto& timeout = _cr.get<StateIdle>(rpbot_contact).timeout;
 	// TODO: config with id
 	timeout = std::min<float>(timeout, _conf.get_double("RPBot", "max_interactive_delay").value_or(4.f));
+	std::cout << "RPBot: onMsg new timeout: " << timeout << "\n";
 
 	return false;
 }

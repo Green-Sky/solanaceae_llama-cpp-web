@@ -27,6 +27,7 @@ LlamaCppWeb::~LlamaCppWeb(void) {
 }
 
 bool LlamaCppWeb::isGood(void) {
+	//return true; // HACK: test old llama server
 	auto res = _cli.Get("/health");
 	if (
 		res.error() != httplib::Error::Success ||
@@ -122,7 +123,7 @@ std::string LlamaCppWeb::completeLine(const std::string_view prompt) {
 		{"temperature", 0.9}, // depends 1.0 for chat models
 		{"top_k", 60},
 		{"top_p", 1.0}, // disable
-		{"n_predict", 1000},
+		{"n_predict", 400},
 		{"seed", _rng()},
 		{"stop", {"\n"}},
 		{"cache_prompt", static_cast<bool>(_use_server_cache)},
