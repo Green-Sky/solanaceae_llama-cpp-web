@@ -172,7 +172,8 @@ float RPBot::doAllIdle(float time_delta) {
 		if (state.timeout <= 0.f) {
 			std::cout << "RPBot: idle timed out\n";
 			// TODO: use multiprompt and better system promp to start immediatly
-			if (auto* mreg = _rmm.get(c); mreg != nullptr && mreg->view<Message::Components::MessageText>().size() >= 4) {
+			// TODO: per id min_messages
+			if (auto* mreg = _rmm.get(c); mreg != nullptr && mreg->view<Message::Components::MessageText>().size() >= _conf.get_int("RPBot", "min_messages").value_or(4)) {
 				to_remove_stateidle.push_back(c);
 				min_tick_interval = 0.1f;
 
@@ -263,5 +264,45 @@ float RPBot::doAllGenerateMsg(float) {
 float RPBot::doAllTimingCheck(float time_delta) {
 	float min_tick_interval = std::numeric_limits<float>::max();
 	return min_tick_interval;
+}
+
+bool RPBot::onEvent(const Message::Events::MessageConstruct& e) {
+	if (!e.e.all_of<Message::Components::ContactFrom, Message::Components::ContactTo>()) {
+		return false;
+	}
+
+	const auto contact_to = e.e.get<Message::Components::ContactTo>().c;
+	const auto contact_from = e.e.get<Message::Components::ContactFrom>().c;
+
+	if (!_cr.valid(contact_to) || !_cr.valid(contact_from)) {
+		std::cerr << "RPBot error: invalid contact in message\n";
+		return false;
+	}
+
+	Contact3 rpbot_contact = entt::null;
+
+	// check ContactTo (public)
+	// check ContactTo parent (group private)
+	// check ContactFrom (private)
+
+	if (_cr.any_of<StateIdle, StateNextActor, StateGenerateMsg, StateTimingCheck>(contact_to)) {
+		rpbot_contact = contact_to;
+	} else if (_cr.all_of<Contact::Components::Parent>(contact_to)) {
+		rpbot_contact = _cr.get<Contact::Components::Parent>(contact_to).parent;
+	} else if (_cr.any_of<StateIdle, StateNextActor, StateGenerateMsg, StateTimingCheck>(contact_from)) {
+		rpbot_contact = contact_from;
+	} else {
+		return false; // not a rpbot related message
+	}
+
+	if (!_cr.all_of<StateIdle>(rpbot_contact)) {
+		return false; // not idle
+	}
+
+	auto& timeout = _cr.get<StateIdle>(rpbot_contact).timeout;
+	// TODO: config with id
+	timeout = std::min<float>(timeout, _conf.get_double("RPBot", "max_interactive_delay").value_or(4.f));
+
+	return false;
 }
 

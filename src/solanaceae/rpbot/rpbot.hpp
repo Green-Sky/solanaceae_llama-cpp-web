@@ -16,7 +16,7 @@ struct StateNextActor;
 struct StateGenerateMsg;
 struct StateTimingCheck;
 
-struct RPBot {
+struct RPBot : public RegistryMessageModelEventI {
 	TextCompletionI& _completion;
 	ConfigModelI& _conf;
 	Contact3Registry& _cr;
@@ -57,5 +57,8 @@ struct RPBot {
 		float doAllNext(float time_delta);
 		float doAllGenerateMsg(float time_delta);
 		float doAllTimingCheck(float time_delta);
+
+	protected: // onMsg
+		bool onEvent(const Message::Events::MessageConstruct& e) override;
 };
 
