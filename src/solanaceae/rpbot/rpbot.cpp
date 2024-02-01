@@ -307,7 +307,11 @@ bool RPBot::onEvent(const Message::Events::MessageConstruct& e) {
 
 	auto& timeout = _cr.get<StateIdle>(rpbot_contact).timeout;
 	// TODO: config with id
-	timeout = std::min<float>(timeout, _conf.get_double("RPBot", "max_interactive_delay").value_or(4.f));
+	timeout = std::clamp<float>(
+		timeout,
+		1.5f, // minimum, helps when activly history syncing
+		_conf.get_double("RPBot", "max_interactive_delay").value_or(4.f)
+	);
 	std::cout << "RPBot: onMsg new timeout: " << timeout << "\n";
 
 	return false;

@@ -65,6 +65,14 @@ void RPBot::registerCommands(void) {
 				auto view = _cr.view<Contact::Components::ID>();
 				for (auto it = view.begin(), it_end = view.end(); it != it_end; it++) {
 					if (view.get<Contact::Components::ID>(*it).data == id_bin) {
+						if (_cr.any_of<StateIdle, StateNextActor, StateGenerateMsg, StateTimingCheck>(*it)) {
+							_rmm.sendText(
+								contact_from,
+								"RPBot already running"
+							);
+							return true;
+						}
+
 						auto& new_state = _cr.emplace<StateIdle>(*it);
 						new_state.timeout = 10.f;
 
