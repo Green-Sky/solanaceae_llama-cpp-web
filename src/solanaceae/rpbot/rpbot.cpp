@@ -48,6 +48,12 @@ void RPBot::stateTransition(const Contact3 c, const StateIdle& from, StateNextAc
 		return;
 	}
 
+	if (mpb.names.size() < 2) {
+		// early exit for too small groups
+		to.future = std::async(std::launch::async, [self]() -> int64_t { return -10; });
+		return;
+	}
+
 	{ // - system promp (needs self name etc)
 		if (const auto* id_comp = _cr.try_get<Contact::Components::ID>(c); id_comp != nullptr) {
 			const auto id_hex = bin2hex(id_comp->data);
@@ -171,26 +177,50 @@ float RPBot::doAllIdle(float time_delta) {
 		}
 
 		state.timeout -= time_delta;
-		if (state.timeout <= 0.f) {
-			std::cout << "RPBot: idle timed out\n";
-			// TODO: use multiprompt and better system promp to start immediatly
-			// TODO: per id min_messages
-			if (auto* mreg = _rmm.get(c); mreg != nullptr && mreg->view<Message::Components::MessageText>().size() >= _conf.get_int("RPBot", "min_messages").value_or(4)) {
-				to_remove_stateidle.push_back(c);
-				min_tick_interval = 0.1f;
+		if (state.timeout > 0.f) {
+			return;
+		}
+		std::cout << "RPBot: idle timed out\n";
 
-				// transition to Next
-				emplaceStateTransition<StateNextActor>(_cr, c, state);
-			} else {
-				// check-in in another 15-45s
-				state.timeout = std::uniform_real_distribution<>{15.f, 45.f}(_rng);
-				std::cout << "RPBot: not ready yet, back to ideling\n";
-				if (mreg == nullptr) {
-					std::cout << "mreg is null\n";
-				} else {
-					std::cout << "size(): " << mreg->view<Message::Components::MessageText>().size() << "\n";
+		// TODO: use multi-shot-prompt and better system promp to start immediatly
+		auto* mreg = _rmm.get(c);
+		if (mreg != nullptr) {
+			// TODO: per id min_messages
+			if (mreg->view<Message::Components::MessageText>().size() >= _conf.get_int("RPBot", "min_messages").value_or(4)) {
+				// maximum amount of messages the bot can send, before someone else needs to send a message
+				// TODO: per id max_cont_messages
+				const size_t max_cont_messages = _conf.get_int("RPBot", "max_cont_messages").value_or(4);
+				auto tmp_view = mreg->view<Message::Components::Timestamp, Message::Components::MessageText, Message::Components::ContactFrom>();
+				tmp_view.use<Message::Components::Timestamp>();
+				bool other_sender {false};
+				auto view_it = tmp_view.begin(), view_last = tmp_view.end();
+				for (size_t i = 0; i < max_cont_messages && view_it != view_last; view_it++, i++) {
+					// TODO: also test for weak self?
+					if (!_cr.any_of<Contact::Components::TagSelfStrong>(tmp_view.get<Message::Components::ContactFrom>(*view_it).c)) {
+						other_sender = true;
+						break;
+					}
+				}
+
+				if (other_sender) {
+					to_remove_stateidle.push_back(c);
+					min_tick_interval = 0.1f;
+
+					// transition to Next
+					emplaceStateTransition<StateNextActor>(_cr, c, state);
+					return;
 				}
 			}
+		}
+
+		// if not handled yet
+		// check-in in another 15-45s
+		state.timeout = std::uniform_real_distribution<>{15.f, 45.f}(_rng);
+		std::cout << "RPBot: not ready yet, back to ideling\n";
+		if (mreg == nullptr) {
+			std::cout << "mreg is null\n";
+		} else {
+			std::cout << "size(): " << mreg->view<Message::Components::MessageText>().size() << "\n";
 		}
 	});
 

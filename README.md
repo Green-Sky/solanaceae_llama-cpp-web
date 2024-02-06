@@ -16,7 +16,7 @@ TODO: move rpbot to own repo
 - `RPBot`, `system_prompt`(, opt contact ID)
   - type: `string`
   - System prompt that is prefixed
-  - can contain spcific formatters
+  - can contain specific formatters:
     - `{self_name}` username for specified chat
   - default: `Transcript of a group chat, where {self_name} talks to online strangers.\n{self_name} is creative and curious. {self_name} is writing with precision, but also with occasional typos.\n`
 
@@ -24,6 +24,11 @@ TODO: move rpbot to own repo
   - type: `int`
   - TODO: implement per ID
   - default: `4`
+
+- `RPBot`, `max_cont_messages`(, opt contact ID)
+  - type: `int`
+  - TODO: implement per ID
+  - default: '4'
 
 - `RPBot`, `max_interactive_delay`(, opt contact ID)
   - type: `float`
