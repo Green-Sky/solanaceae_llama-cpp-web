@@ -18,6 +18,7 @@ TODO: move rpbot to own repo
   - System prompt that is prefixed
   - can contain specific formatters:
     - `{self_name}` username for specified chat
+    - `{online_users}` coma seperated list of online users
   - default: `Transcript of a group chat, where {self_name} talks to online strangers.\n{self_name} is creative and curious. {self_name} is writing with precision, but also with occasional typos.\n`
 
 - `RPBot`, `min_messages`(, opt contact ID)

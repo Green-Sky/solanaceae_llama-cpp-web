@@ -62,12 +62,20 @@ void RPBot::stateTransition(const Contact3 c, const StateIdle& from, StateNextAc
 			to.prompt = _conf.get_string("RPBot", "system_prompt").value();
 		}
 
+		std::string online_users;
+		for (const auto& [_, name] : mpb.names) {
+			if (!online_users.empty()) {
+				online_users += ", ";
+			}
+			online_users += name;
+		}
+
 		to.prompt = fmt::format(fmt::runtime(to.prompt),
-			fmt::arg("self_name", to.possible_names.at(self))
+			fmt::arg("self_name", to.possible_names.at(self)),
 			//fmt::arg("chat_name", "test_group"),
 			//fmt::arg("chat_type", "Group")
 			//fmt::arg("chat_topic", "Group")
-			// current online?
+			fmt::arg("online_users", online_users)
 			// current date?
 		);
 	}
