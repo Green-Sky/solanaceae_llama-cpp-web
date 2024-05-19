@@ -5,6 +5,9 @@
 #include <solanaceae/rpbot/rpbot.hpp>
 #include <solanaceae/message3/message_command_dispatcher.hpp>
 
+#include <entt/entt.hpp>
+#include <entt/fwd.hpp>
+
 #include <memory>
 #include <iostream>
 #include <limits>
