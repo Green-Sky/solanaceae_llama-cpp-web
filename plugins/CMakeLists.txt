@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.14...3.24 FATAL_ERROR)
 
-add_library(plugin_llama-cpp-web SHARED
+add_library(plugin_llama-cpp-web MODULE
 	./plugin_llama-cpp-web.cpp
 )
 set_target_properties(plugin_llama-cpp-web PROPERTIES
 	C_VISIBILITY_PRESET hidden
-	POSITION_INDEPENDENT_CODE ON
 )
 
 target_link_libraries(plugin_llama-cpp-web PUBLIC
@@ -15,13 +14,12 @@ target_link_libraries(plugin_llama-cpp-web PUBLIC
 
 ########################################
 
-add_library(plugin_rpbot SHARED
+add_library(plugin_rpbot MODULE
 	./plugin_rpbot.cpp
 )
 
 set_target_properties(plugin_rpbot PROPERTIES
 	C_VISIBILITY_PRESET hidden
-	POSITION_INDEPENDENT_CODE ON
 )
 target_compile_definitions(plugin_rpbot PUBLIC ENTT_API_IMPORT)
 

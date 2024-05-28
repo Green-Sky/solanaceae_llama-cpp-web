@@ -53,7 +53,7 @@ endif()
 if (NOT TARGET httplib::httplib)
 	FetchContent_Declare(httplib
 		GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
-		GIT_TAG master
+		GIT_TAG v0.15.3
 		EXCLUDE_FROM_ALL
 	)
 	FetchContent_MakeAvailable(httplib)
