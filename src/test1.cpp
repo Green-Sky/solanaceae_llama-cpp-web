@@ -20,7 +20,7 @@ int main(void) {
 	}
 	std::cerr << lcw._cli.host() << " " << lcw._cli.port() << " endpoint healthy\n";
 
-	std::cout << "The meaning of life is to"
+	std::cerr << "The meaning of life is to"
 		<< lcw.complete(nlohmann::json{
 			{"prompt", "The meaning of life is to"},
 			{"min_p", 0.1}, // model dependent
@@ -34,9 +34,9 @@ int main(void) {
 		})
 		<< "\n";
 
-	std::cout << "-------------------------\n";
+	std::cerr << "-------------------------\n";
 
-	std::cout << "complete from select:\n";
+	std::cerr << "complete from select:\n";
 	std::vector<std::string_view> possible {
 		" die",
 		" die.",
@@ -46,12 +46,12 @@ int main(void) {
 		" Hi",
 	};
 	for (size_t i = 0; i < 10; i++) {
-		std::cout << "The meaning of life is to";
+		std::cerr << "The meaning of life is to";
 		auto res = lcw.completeSelect("The meaning of life is to", possible);
 		if (res < 0) {
-			std::cout << " error--\n";
+			std::cerr << " error\n";
 		} else {
-			std::cout << possible[res] << "\n";
+			std::cerr << possible[res] << "\n";
 		}
 	}
 

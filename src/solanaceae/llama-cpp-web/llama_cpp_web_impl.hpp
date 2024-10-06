@@ -19,7 +19,7 @@ struct LlamaCppWeb : public TextCompletionI {
 	// this is a bad idea
 	static std::minstd_rand thread_local _rng;
 
-	std::atomic<bool> _use_server_cache {true};
+	std::atomic<bool> _use_server_cache {false};
 
 	LlamaCppWeb(
 		ConfigModelI& conf

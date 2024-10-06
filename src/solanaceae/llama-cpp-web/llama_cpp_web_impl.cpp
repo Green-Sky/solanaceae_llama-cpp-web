@@ -77,7 +77,7 @@ int64_t LlamaCppWeb::completeSelect(const std::string_view prompt, const std::ve
 	}
 	//grammar += ")";
 
-	//std::cout << "generated grammar:\n" << grammar << "\n";
+	std::cerr << "generated grammar:\n" << grammar << "\n";
 
 	auto ret = complete(nlohmann::json{
 		{"prompt", prompt},
@@ -89,19 +89,23 @@ int64_t LlamaCppWeb::completeSelect(const std::string_view prompt, const std::ve
 		{"top_p", 1.0}, // disable
 		{"n_predict", 256}, // unlikely to ever be so high
 		{"seed", _rng()},
+		{"ignore_eos", true},
 		{"cache_prompt", static_cast<bool>(_use_server_cache)},
 	});
 
 	if (ret.empty()) {
+		assert("ret empty" && false);
 		return -2;
 	}
 
 	if (!ret.count("content")) {
+		assert("no content" && false);
 		return -3;
 	}
 
 	std::string selected = ret.at("content");
 	if (selected.empty()) {
+		assert("content empty" && false);
 		return -4;
 	}
 
@@ -111,6 +115,7 @@ int64_t LlamaCppWeb::completeSelect(const std::string_view prompt, const std::ve
 		}
 	}
 
+	std::cerr << "content does not contain match\n";
 	std::cerr << "complete failed j:'" << ret.dump() << "'\n";
 	return -5;
 }
@@ -125,7 +130,7 @@ std::string LlamaCppWeb::completeLine(const std::string_view prompt) {
 		{"top_p", 1.0}, // disable
 		{"n_predict", 400},
 		{"seed", _rng()},
-		{"stop", {"\n"}},
+		{"stop", nlohmann::json::array({"\n"})},
 		{"cache_prompt", static_cast<bool>(_use_server_cache)},
 	});
 
@@ -147,7 +152,7 @@ nlohmann::json LlamaCppWeb::complete(const nlohmann::json& request_j) {
 	// steaming instead would be better
 	_cli.set_read_timeout(std::chrono::minutes(10));
 
-	//std::cout << "j dump: '" << request_j.dump(-1, ' ', true) << "'\n";
+	std::cerr << "j dump: '" << request_j.dump(-1, ' ', true) << "'\n";
 
 	auto res = _cli.Post("/completion", request_j.dump(-1, ' ', true), "application/json");
 
@@ -159,7 +164,7 @@ nlohmann::json LlamaCppWeb::complete(const nlohmann::json& request_j) {
 		//res->body.empty() ||
 		//res->get_header_value("Content-Type") != "application/json"
 	) {
-		std::cerr << "error posting\n";
+		std::cerr << "error posting: '" << res->body << "'\n";
 		return {};
 	}
 
