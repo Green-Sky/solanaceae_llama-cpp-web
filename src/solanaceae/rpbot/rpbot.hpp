@@ -20,7 +20,7 @@ struct RPBot : public RegistryMessageModelEventI {
 	TextCompletionI& _completion;
 	ConfigModelI& _conf;
 	Contact3Registry& _cr;
-	RegistryMessageModel& _rmm;
+	RegistryMessageModelI& _rmm;
 	MessageCommandDispatcher* _mcd;
 
 	std::minstd_rand _rng{std::random_device{}()};
@@ -30,7 +30,7 @@ struct RPBot : public RegistryMessageModelEventI {
 			TextCompletionI& completion,
 			ConfigModelI& conf,
 			Contact3Registry& cr,
-			RegistryMessageModel& rmm,
+			RegistryMessageModelI& rmm,
 			MessageCommandDispatcher* mcd
 		);
 

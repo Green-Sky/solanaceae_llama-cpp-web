@@ -10,7 +10,7 @@
 struct MessagePromptBuilder {
 	Contact3Registry& _cr;
 	const Contact3 _c;
-	RegistryMessageModel& _rmm;
+	RegistryMessageModelI& _rmm;
 
 	// lookup table, string_view since no name-components are changed
 	entt::dense_map<Contact3, std::string_view> names;

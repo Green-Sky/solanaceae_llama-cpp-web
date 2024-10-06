@@ -138,7 +138,7 @@ RPBot::RPBot(
 	TextCompletionI& completion,
 	ConfigModelI& conf,
 	Contact3Registry& cr,
-	RegistryMessageModel& rmm,
+	RegistryMessageModelI& rmm,
 	MessageCommandDispatcher* mcd
 ) : _completion(completion), _conf(conf), _cr(cr), _rmm(rmm), _mcd(mcd) {
 	//system_prompt = R"sys(Transcript of a group chat, where Bob talks to online strangers.
