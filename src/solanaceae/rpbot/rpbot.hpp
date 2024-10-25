@@ -21,6 +21,7 @@ struct RPBot : public RegistryMessageModelEventI {
 	ConfigModelI& _conf;
 	Contact3Registry& _cr;
 	RegistryMessageModelI& _rmm;
+	RegistryMessageModelI::SubscriptionReference _rmm_sr;
 	MessageCommandDispatcher* _mcd;
 
 	std::minstd_rand _rng{std::random_device{}()};

@@ -140,7 +140,7 @@ RPBot::RPBot(
 	Contact3Registry& cr,
 	RegistryMessageModelI& rmm,
 	MessageCommandDispatcher* mcd
-) : _completion(completion), _conf(conf), _cr(cr), _rmm(rmm), _mcd(mcd) {
+) : _completion(completion), _conf(conf), _cr(cr), _rmm(rmm), _rmm_sr(_rmm.newSubRef(this)), _mcd(mcd) {
 	//system_prompt = R"sys(Transcript of a group chat, where Bob talks to online strangers.
 //)sys";
 
@@ -157,7 +157,7 @@ R"sys(Transcript of a group chat, where {self_name} talks to online strangers.
 
 	registerCommands();
 
-	_rmm.subscribe(this, RegistryMessageModel_Event::message_construct);
+	_rmm_sr.subscribe(RegistryMessageModel_Event::message_construct);
 }
 
 float RPBot::tick(float time_delta) {
