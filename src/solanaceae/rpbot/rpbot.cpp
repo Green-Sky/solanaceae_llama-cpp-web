@@ -18,22 +18,24 @@
 #include <cstdint>
 
 template<>
-void RPBot::stateTransition(const Contact3 c, const StateIdle& from, StateNextActor& to) {
+void RPBot::stateTransition(const Contact4 c, const StateIdle& from, StateNextActor& to) {
 	// collect promp
 
-	MessagePromptBuilder mpb{_cr, c, _rmm, {}};
+	MessagePromptBuilder mpb{_cs, c, _rmm, {}};
 	mpb.buildNameLookup();
+
+	const auto& cr = _cs.registry();
 
 	int64_t self {-1};
 	{ // get set of possible usernames (even if forced, just to make sure)
 		// copy mpb.names (contains string views, needs copies)
 		for (const auto& [name_c, name] : mpb.names) {
-			if (_cr.all_of<Contact::Components::TagSelfStrong>(name_c)) {
+			if (cr.all_of<Contact::Components::TagSelfStrong>(name_c)) {
 				self = to.possible_contacts.size();
 				to.possible_names.push_back(std::string{name});
 				to.possible_contacts.push_back(name_c);
-			} else if (_cr.all_of<Contact::Components::ConnectionState>(name_c)) {
-				if (_cr.get<Contact::Components::ConnectionState>(name_c).state != Contact::Components::ConnectionState::disconnected) {
+			} else if (cr.all_of<Contact::Components::ConnectionState>(name_c)) {
+				if (cr.get<Contact::Components::ConnectionState>(name_c).state != Contact::Components::ConnectionState::disconnected) {
 					// online
 					to.possible_names.push_back(std::string{name});
 					to.possible_contacts.push_back(name_c);
@@ -55,7 +57,7 @@ void RPBot::stateTransition(const Contact3 c, const StateIdle& from, StateNextAc
 	}
 
 	{ // - system promp (needs self name etc)
-		if (const auto* id_comp = _cr.try_get<Contact::Components::ID>(c); id_comp != nullptr) {
+		if (const auto* id_comp = cr.try_get<Contact::Components::ID>(c); id_comp != nullptr) {
 			const auto id_hex = bin2hex(id_comp->data);
 			to.prompt = _conf.get_string("RPBot", "system_prompt", id_hex).value();
 		} else {
@@ -109,17 +111,18 @@ void RPBot::stateTransition(const Contact3 c, const StateIdle& from, StateNextAc
 }
 
 template<>
-void RPBot::stateTransition(const Contact3, const StateNextActor&, StateIdle& to) {
+void RPBot::stateTransition(const Contact4, const StateNextActor&, StateIdle& to) {
 	to.timeout = std::uniform_real_distribution<>{30.f, 5.f*60.f}(_rng);
 }
 
 template<>
-void RPBot::stateTransition(const Contact3 c, const StateNextActor& from, StateGenerateMsg& to) {
+void RPBot::stateTransition(const Contact4 c, const StateNextActor& from, StateGenerateMsg& to) {
+	const auto& cr = _cs.registry();
 	to.prompt = from.prompt; // TODO: move from?
-	assert(_cr.all_of<Contact::Components::Self>(c));
-	const Contact3 self = _cr.get<Contact::Components::Self>(c).self;
+	assert(cr.all_of<Contact::Components::Self>(c));
+	const Contact4 self = cr.get<Contact::Components::Self>(c).self;
 
-	to.prompt += _cr.get<Contact::Components::Name>(self).name + ":"; // TODO: remove space
+	to.prompt += cr.get<Contact::Components::Name>(self).name + ":"; // TODO: remove space
 
 	{ // launch async
 		to.future = std::async(std::launch::async, [&to, this]() -> std::string {
@@ -129,7 +132,7 @@ void RPBot::stateTransition(const Contact3 c, const StateNextActor& from, StateG
 }
 
 template<>
-void RPBot::stateTransition(const Contact3, const StateGenerateMsg&, StateIdle& to) {
+void RPBot::stateTransition(const Contact4, const StateGenerateMsg&, StateIdle& to) {
 	// relativly slow delay for multi line messages
 	to.timeout = std::uniform_real_distribution<>{2.f, 15.f}(_rng);
 }
@@ -137,10 +140,10 @@ void RPBot::stateTransition(const Contact3, const StateGenerateMsg&, StateIdle& 
 RPBot::RPBot(
 	TextCompletionI& completion,
 	ConfigModelI& conf,
-	Contact3Registry& cr,
+	ContactStore4I& cs,
 	RegistryMessageModelI& rmm,
 	MessageCommandDispatcher* mcd
-) : _completion(completion), _conf(conf), _cr(cr), _rmm(rmm), _rmm_sr(_rmm.newSubRef(this)), _mcd(mcd) {
+) : _completion(completion), _conf(conf), _cs(cs), _rmm(rmm), _rmm_sr(_rmm.newSubRef(this)), _mcd(mcd) {
 	//system_prompt = R"sys(Transcript of a group chat, where Bob talks to online strangers.
 //)sys";
 
@@ -172,15 +175,16 @@ float RPBot::tick(float time_delta) {
 }
 
 float RPBot::doAllIdle(float time_delta) {
+	auto& cr = _cs.registry();
 	float min_tick_interval = std::numeric_limits<float>::max();
-	std::vector<Contact3> to_remove_stateidle;
-	auto view = _cr.view<StateIdle>();
+	std::vector<Contact4> to_remove_stateidle;
+	auto view = cr.view<StateIdle>();
 
-	view.each([this, time_delta, &to_remove_stateidle, &min_tick_interval](const Contact3 c, StateIdle& state) {
-		if (_cr.all_of<TagStopRPBot>(c)) {
+	view.each([this, &cr, time_delta, &to_remove_stateidle, &min_tick_interval](const Contact4 c, StateIdle& state) {
+		if (cr.all_of<TagStopRPBot>(c)) {
 			// marked for deletion, in idle (here) we remove them without adding next state
 			to_remove_stateidle.push_back(c);
-			_cr.remove<TagStopRPBot>(c);
+			cr.remove<TagStopRPBot>(c);
 			return;
 		}
 
@@ -204,7 +208,7 @@ float RPBot::doAllIdle(float time_delta) {
 				auto view_it = tmp_view.begin(), view_last = tmp_view.end();
 				for (size_t i = 0; i < max_cont_messages && view_it != view_last; view_it++, i++) {
 					// TODO: also test for weak self?
-					if (!_cr.any_of<Contact::Components::TagSelfStrong>(tmp_view.get<Message::Components::ContactFrom>(*view_it).c)) {
+					if (!cr.any_of<Contact::Components::TagSelfStrong>(tmp_view.get<Message::Components::ContactFrom>(*view_it).c)) {
 						other_sender = true;
 						break;
 					}
@@ -215,7 +219,7 @@ float RPBot::doAllIdle(float time_delta) {
 					min_tick_interval = 0.1f;
 
 					// transition to Next
-					emplaceStateTransition<StateNextActor>(_cr, c, state);
+					emplaceStateTransition<StateNextActor>(_cs, c, state);
 					return;
 				}
 			}
@@ -232,16 +236,17 @@ float RPBot::doAllIdle(float time_delta) {
 		}
 	});
 
-	_cr.remove<StateIdle>(to_remove_stateidle.cbegin(), to_remove_stateidle.cend());
+	cr.remove<StateIdle>(to_remove_stateidle.cbegin(), to_remove_stateidle.cend());
 	return min_tick_interval;
 }
 
 float RPBot::doAllNext(float) {
+	auto& cr = _cs.registry();
 	float min_tick_interval = std::numeric_limits<float>::max();
-	std::vector<Contact3> to_remove;
-	auto view = _cr.view<StateNextActor>();
+	std::vector<Contact4> to_remove;
+	auto view = cr.view<StateNextActor>();
 
-	view.each([this, &to_remove, &min_tick_interval](const Contact3 c, StateNextActor& state) {
+	view.each([this, &cr, &to_remove, &min_tick_interval](const Contact4 c, StateNextActor& state) {
 		// TODO: how to timeout?
 		if (state.future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
 			to_remove.push_back(c);
@@ -251,9 +256,9 @@ float RPBot::doAllNext(float) {
 			const auto selected = state.future.get();
 			if (selected >= 0 && size_t(selected) < state.possible_names.size()) {
 				std::cout << "next is " << state.possible_names.at(selected) << "(" << selected << ")\n";
-				if (_cr.all_of<Contact::Components::TagSelfStrong>(state.possible_contacts.at(selected))) {
+				if (cr.all_of<Contact::Components::TagSelfStrong>(state.possible_contacts.at(selected))) {
 					// we predicted ourselfs
-					emplaceStateTransition<StateGenerateMsg>(_cr, c, state);
+					emplaceStateTransition<StateGenerateMsg>(_cs, c, state);
 					return;
 				}
 			} else {
@@ -261,21 +266,22 @@ float RPBot::doAllNext(float) {
 			}
 
 			// transition to Idle
-			emplaceStateTransition<StateIdle>(_cr, c, state);
+			emplaceStateTransition<StateIdle>(_cs, c, state);
 		}
 	});
 
-	_cr.remove<StateNextActor>(to_remove.cbegin(), to_remove.cend());
+	cr.remove<StateNextActor>(to_remove.cbegin(), to_remove.cend());
 	return min_tick_interval;
 }
 
 float RPBot::doAllGenerateMsg(float) {
+	auto& cr = _cs.registry();
 	float min_tick_interval = std::numeric_limits<float>::max();
-	std::vector<Contact3> to_remove;
-	auto view = _cr.view<StateGenerateMsg>();
+	std::vector<Contact4> to_remove;
+	auto view = cr.view<StateGenerateMsg>();
 
-	_cr.remove<StateGenerateMsg>(to_remove.cbegin(), to_remove.cend());
-	view.each([this, &to_remove, &min_tick_interval](const Contact3 c, StateGenerateMsg& state) {
+	cr.remove<StateGenerateMsg>(to_remove.cbegin(), to_remove.cend());
+	view.each([this, &to_remove, &min_tick_interval](const Contact4 c, StateGenerateMsg& state) {
 		// TODO: how to timeout?
 		if (state.future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
 			to_remove.push_back(c);
@@ -293,11 +299,11 @@ float RPBot::doAllGenerateMsg(float) {
 
 			// TODO: timing check?
 			// transition to Idle
-			emplaceStateTransition<StateIdle>(_cr, c, state);
+			emplaceStateTransition<StateIdle>(_cs, c, state);
 		}
 	});
 
-	_cr.remove<StateGenerateMsg>(to_remove.cbegin(), to_remove.cend());
+	cr.remove<StateGenerateMsg>(to_remove.cbegin(), to_remove.cend());
 	return min_tick_interval;
 }
 
@@ -311,39 +317,41 @@ bool RPBot::onEvent(const Message::Events::MessageConstruct& e) {
 		return false;
 	}
 
+	auto& cr = _cs.registry();
+
 	const auto contact_to = e.e.get<Message::Components::ContactTo>().c;
 	const auto contact_from = e.e.get<Message::Components::ContactFrom>().c;
 
-	if (!_cr.valid(contact_to) || !_cr.valid(contact_from)) {
+	if (!cr.valid(contact_to) || !cr.valid(contact_from)) {
 		std::cerr << "RPBot error: invalid contact in message\n";
 		return false;
 	}
 
-	if (_cr.any_of<Contact::Components::TagSelfStrong>(contact_from)) {
+	if (cr.any_of<Contact::Components::TagSelfStrong>(contact_from)) {
 		return false; // ignore own messages
 	}
 
-	Contact3 rpbot_contact = entt::null;
+	Contact4 rpbot_contact = entt::null;
 
 	// check ContactTo (public)
 	// check ContactTo parent (group private)
 	// check ContactFrom (private)
 
-	if (_cr.any_of<StateIdle, StateNextActor, StateGenerateMsg, StateTimingCheck>(contact_to)) {
+	if (cr.any_of<StateIdle, StateNextActor, StateGenerateMsg, StateTimingCheck>(contact_to)) {
 		rpbot_contact = contact_to;
-	} else if (_cr.all_of<Contact::Components::Parent>(contact_to)) {
-		rpbot_contact = _cr.get<Contact::Components::Parent>(contact_to).parent;
-	} else if (_cr.any_of<StateIdle, StateNextActor, StateGenerateMsg, StateTimingCheck>(contact_from)) {
+	} else if (cr.all_of<Contact::Components::Parent>(contact_to)) {
+		rpbot_contact = cr.get<Contact::Components::Parent>(contact_to).parent;
+	} else if (cr.any_of<StateIdle, StateNextActor, StateGenerateMsg, StateTimingCheck>(contact_from)) {
 		rpbot_contact = contact_from;
 	} else {
 		return false; // not a rpbot related message
 	}
 
-	if (!_cr.all_of<StateIdle>(rpbot_contact)) {
+	if (!cr.all_of<StateIdle>(rpbot_contact)) {
 		return false; // not idle
 	}
 
-	auto& timeout = _cr.get<StateIdle>(rpbot_contact).timeout;
+	auto& timeout = cr.get<StateIdle>(rpbot_contact).timeout;
 	// TODO: config with id
 	timeout = std::clamp<float>(
 		timeout,

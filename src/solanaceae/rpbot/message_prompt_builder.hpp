@@ -1,19 +1,19 @@
 #pragma once
 
 #include <solanaceae/util/config_model.hpp>
-#include <solanaceae/contact/contact_model3.hpp>
+#include <solanaceae/contact/fwd.hpp>
 #include <solanaceae/message3/registry_message_model.hpp>
 
 #include <entt/container/dense_map.hpp>
 
 // TODO: improve caching
 struct MessagePromptBuilder {
-	Contact3Registry& _cr;
-	const Contact3 _c;
+	ContactStore4I& _cs;
+	const Contact4 _c;
 	RegistryMessageModelI& _rmm;
 
 	// lookup table, string_view since no name-components are changed
-	entt::dense_map<Contact3, std::string_view> names;
+	entt::dense_map<Contact4, std::string_view> names;
 
 	bool buildNameLookup(void);
 

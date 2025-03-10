@@ -2,30 +2,32 @@
 
 #include "./rpbot.hpp"
 
+#include <solanaceae/contact/contact_store_i.hpp>
 #include <solanaceae/contact/components.hpp>
 #include <solanaceae/message3/components.hpp>
 
 bool MessagePromptBuilder::buildNameLookup(void) {
-	if (_cr.all_of<Contact::Components::ParentOf>(_c)) { // group rpbot
-		const auto& subs = _cr.get<Contact::Components::ParentOf>(_c).subs;
+	const auto& cr = _cs.registry();
+	if (cr.all_of<Contact::Components::ParentOf>(_c)) { // group rpbot
+		const auto& subs = cr.get<Contact::Components::ParentOf>(_c).subs;
 		// should include self
 		for (const auto sub_c : subs) {
-			if (_cr.all_of<Contact::Components::Name>(sub_c)) {
-				names[sub_c] = _cr.get<Contact::Components::Name>(sub_c).name;
+			if (cr.all_of<Contact::Components::Name>(sub_c)) {
+				names[sub_c] = cr.get<Contact::Components::Name>(sub_c).name;
 			}
 		}
 	} else { // pm rpbot
-		if (_cr.all_of<Contact::Components::Name>(_c)) {
-			names[_c] = _cr.get<Contact::Components::Name>(_c).name;
+		if (cr.all_of<Contact::Components::Name>(_c)) {
+			names[_c] = cr.get<Contact::Components::Name>(_c).name;
 		} else {
 			std::cerr << "RPBot error: other missing name\n";
 			return false;
 		}
 
-		if (_cr.all_of<Contact::Components::Self>(_c)) {
-			const auto self = _cr.get<Contact::Components::Self>(_c).self;
-			if (_cr.all_of<Contact::Components::Name>(self)) {
-				names[self] = _cr.get<Contact::Components::Name>(self).name;
+		if (cr.all_of<Contact::Components::Self>(_c)) {
+			const auto self = cr.get<Contact::Components::Self>(_c).self;
+			if (cr.all_of<Contact::Components::Name>(self)) {
+				names[self] = cr.get<Contact::Components::Name>(self).name;
 			} else {
 				std::cerr << "RPBot error: self missing name\n";
 				return false;
@@ -87,7 +89,7 @@ std::string MessagePromptBuilder::buildPromptMessage(const Message3Handle m) {
 }
 
 std::string MessagePromptBuilder::promptMessagePrefixSimple(const Message3Handle m) {
-	const Contact3 from = m.get<Message::Components::ContactFrom>().c;
+	const Contact4 from = m.get<Message::Components::ContactFrom>().c;
 	if (names.count(from)) {
 		return std::string{names[from]};
 	} else {
@@ -98,8 +100,8 @@ std::string MessagePromptBuilder::promptMessagePrefixSimple(const Message3Handle
 std::string MessagePromptBuilder::promptMessagePrefixDirected(const Message3Handle m) {
 	// with both contacts (eg: "Name1 to Name2"; or "Name1 to Everyone"
 
-	const Contact3 from = m.get<Message::Components::ContactFrom>().c;
-	const Contact3 to = m.get<Message::Components::ContactTo>().c;
+	const Contact4 from = m.get<Message::Components::ContactFrom>().c;
+	const Contact4 to = m.get<Message::Components::ContactTo>().c;
 
 	std::string res;
 

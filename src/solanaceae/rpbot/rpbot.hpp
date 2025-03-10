@@ -2,7 +2,7 @@
 
 #include <solanaceae/util/config_model.hpp>
 #include <solanaceae/llama-cpp-web/text_completion_interface.hpp>
-#include <solanaceae/contact/contact_model3.hpp>
+#include <solanaceae/contact/contact_store_i.hpp>
 #include <solanaceae/message3/registry_message_model.hpp>
 #include <solanaceae/message3/message_command_dispatcher.hpp>
 
@@ -19,7 +19,7 @@ struct StateTimingCheck;
 struct RPBot : public RegistryMessageModelEventI {
 	TextCompletionI& _completion;
 	ConfigModelI& _conf;
-	Contact3Registry& _cr;
+	ContactStore4I& _cs;
 	RegistryMessageModelI& _rmm;
 	RegistryMessageModelI::SubscriptionReference _rmm_sr;
 	MessageCommandDispatcher* _mcd;
@@ -30,7 +30,7 @@ struct RPBot : public RegistryMessageModelEventI {
 		RPBot(
 			TextCompletionI& completion,
 			ConfigModelI& conf,
-			Contact3Registry& cr,
+			ContactStore4I& cs,
 			RegistryMessageModelI& rmm,
 			MessageCommandDispatcher* mcd
 		);
@@ -42,13 +42,13 @@ struct RPBot : public RegistryMessageModelEventI {
 	protected: // state transitions
 		// all transitions need to be explicitly declared
 		template<typename To, typename From>
-		void stateTransition(const Contact3 c, const From& from, To& to) = delete;
+		void stateTransition(const Contact4 c, const From& from, To& to) = delete;
 
 		// reg helper
 		template<typename To, typename From>
-		To& emplaceStateTransition(Contact3Registry& cr, Contact3 c, const From& state) {
+		To& emplaceStateTransition(ContactStore4I& cs, Contact4 c, const From& state) {
 			std::cout << "RPBot: transition from " << From::name << " to " << To::name << "\n";
-			To& to = cr.emplace_or_replace<To>(c);
+			To& to = cs.registry().emplace_or_replace<To>(c);
 			stateTransition<To>(c, state, to);
 			return to;
 		}

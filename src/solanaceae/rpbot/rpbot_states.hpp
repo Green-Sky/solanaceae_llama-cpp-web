@@ -22,7 +22,7 @@ struct StateNextActor {
 
 	std::string prompt;
 	std::vector<std::string> possible_names;
-	std::vector<Contact3> possible_contacts;
+	std::vector<Contact4> possible_contacts;
 
 	std::future<int64_t> future;
 };
