@@ -1,6 +1,7 @@
 #include <solanaceae/plugin/solana_plugin_v1.h>
 
 #include <solanaceae/util/config_model.hpp>
+#include <solanaceae/contact/contact_store_i.hpp>
 #include <solanaceae/llama-cpp-web/text_completion_interface.hpp>
 #include <solanaceae/rpbot/rpbot.hpp>
 #include <solanaceae/message3/message_command_dispatcher.hpp>
