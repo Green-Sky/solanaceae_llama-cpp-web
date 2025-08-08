@@ -5,13 +5,11 @@
 #include <nlohmann/json.hpp>
 
 #include <iostream>
-#include <random>
 #include <vector>
-#include <chrono>
-#include <cstdint>
 
 int main(void) {
 	SimpleConfigModel scm;
+	scm.set("LlamaCppWeb", "server", std::string_view{"localhost:8081"});
 	LlamaCppWeb lcw{scm};
 
 	if (!lcw.isGood()) {
@@ -30,7 +28,7 @@ int main(void) {
 			{"top_p", 1.0}, // disable
 			{"n_predict", 16},
 			{"stop", {".", "\n"}},
-			{"gramar", ""}
+			{"grammar", ""}
 		})
 		<< "\n";
 

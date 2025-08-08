@@ -33,7 +33,10 @@ bool LlamaCppWeb::isGood(void) {
 		res.error() != httplib::Error::Success ||
 		res->status != 200 ||
 		res->body.empty() ||
-		res->get_header_value("Content-Type") != "application/json"
+		(
+		 	res->get_header_value("Content-Type") != "application/json" &&
+			res->get_header_value("Content-Type") != "application/json; charset=utf-8"
+		)
 	) {
 		return false;
 	}
