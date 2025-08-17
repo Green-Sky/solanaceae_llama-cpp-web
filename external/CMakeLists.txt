@@ -51,6 +51,9 @@ endif()
 #endif()
 
 if (NOT TARGET httplib::httplib)
+	# fails on android
+	set(HTTPLIB_USE_ZSTD_IF_AVAILABLE OFF CACHE BOOL "" FORCE)
+
 	FetchContent_Declare(httplib
 		GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
 		GIT_TAG v0.22.0
